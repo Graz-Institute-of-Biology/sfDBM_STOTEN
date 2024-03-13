@@ -1236,16 +1236,15 @@ def main():
     crust_name = args.crust_name
     realTinput = args.season
     respif = args.respif
-
+    filesave = True
+    saveFigures = True
+    plotFigures = True
+    
     fname_target = 'sfDBM_'+crust_name+'_'+realTinput+'_with_reac_respif_%.4f'%respif 
     print(fname_target)
     
     PATH = "C:/Users/kimmi/Documents/GitHub/dfDBM_STOTEN"
 
-    filesave = True
-    saveFigures = True
-    plotFigures = True
-    
     # Load pre-saved soil property data
     df_soil_r, df_obs, averageT = load_field_data_soil_properties(PATH, crust_name, realTinput)
     
@@ -1260,30 +1259,30 @@ def main():
         
         plot_results(PATH, figure_title,df_obs,effluxList,timeConcDist,timeLine,saveFigures=saveFigures) 
 
-#if __name__ == '__main__':
-#    main()
+if __name__ == '__main__':
+    main()
 # %%
-PATH = "C:/Users/kimmi/Documents/GitHub/dfDBM_STOTEN"
+# PATH = "C:/Users/kimmi/Documents/GitHub/dfDBM_STOTEN"
 
-filesave = True
-saveFigures = True
-plotFigures = True
+# filesave = True
+# saveFigures = True
+# plotFigures = True
 
-crust_name = 'PD' # ['PD', 'MC', 'SD']
-realTinput = 'winter' #['winter', 'summer']
-respif = 0 #provide in the unit of micromol/m2.sec-1
+# crust_name = 'PD' # ['PD', 'MC', 'SD']
+# realTinput = 'winter' #['winter', 'summer']
+# respif = 0 #provide in the unit of micromol/m2.sec-1
 
-fname_target = 'sfDBM_'+crust_name+'_'+realTinput+'_with_reac_respif_%.4f'%respif 
-print(fname_target)
+# fname_target = 'sfDBM_'+crust_name+'_'+realTinput+'_with_reac_respif_%.4f'%respif 
+# print(fname_target)
 
-df_soil_r, df_obs, averageT = load_field_data_soil_properties(PATH, crust_name, realTinput)
+# df_soil_r, df_obs, averageT = load_field_data_soil_properties(PATH, crust_name, realTinput)
 
-timeLine,effluxList, timeConcDist = main_tabernas_biocrusts(PATH, crust_name, realTinput,respif, fname_target, filesave=filesave, plotFigures=plotFigures)
+# timeLine,effluxList, timeConcDist = main_tabernas_biocrusts(PATH, crust_name, realTinput,respif, fname_target, filesave=filesave, plotFigures=plotFigures)
 
-if plotFigures:    
-    if respif == 0:
-        figure_title = crust_name+' ('+realTinput+')'
-    else:
-        figure_title = crust_name+' ('+realTinput+') when $R_{CO_2}$ = %.2f [$\mu$mol m$^{-2}$s$^{-1}$]'%respif 
+# if plotFigures:    
+#     if respif == 0:
+#         figure_title = crust_name+' ('+realTinput+')'
+#     else:
+#         figure_title = crust_name+' ('+realTinput+') when $R_{CO_2}$ = %.2f [$\mu$mol m$^{-2}$s$^{-1}$]'%respif 
     
-    plot_results(PATH, figure_title,df_obs,effluxList,timeConcDist,timeLine,saveFigures=saveFigures) 
+#     plot_results(PATH, figure_title,df_obs,effluxList,timeConcDist,timeLine,saveFigures=saveFigures) 
