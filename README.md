@@ -3,7 +3,14 @@
 
 <img src="https://github.com/minsughim/sfDBM_STOTEN/blob/main/Graphical_abstract.png" width="100%">
 
- In this repository, we list all the scripts that were used for the project 
+ The simplified field application of DBM simulates the gaseous C and N emissions from soils under dynamic hydration condition. This repository provides an example usage of the model, that explains the nocturnal CO2 uptake by dryland soils where biological activities are limited (Kim et al 2024). 
+ Compared to the previous DBM models in MATLAB (please refer to other repositories, DBM-Biogeoscience and DBM-for-drying-soils), this sfDBM is written in Python 3. Another distinction is that, in this sfDBM, the individual based on model of microbial communities is simply replaced as sink and source of substrates (namely, population based). However, the kinetics to determine gas-liquid partitioning of compounds, local pH determiniation under the aussumption of charge neutralitiy are updated by including gypsum.
+ The provided script utilises the environmental variables at field such as temperature (air, surface , soil), water content, atmospheric CO2, and measured soil properties like porosity, soil pH, CaCO3 contents, etc. The field data and detailed measurement campagins can be found at  Lopez-Canfin et al. 2021.
+ In this repository, we provide small subset of the data to demonstrate the usage of the model (see the folder ./input_data/). The data can be downloaded can be attaind via … 
+ 
+ # Model simulation 
+ 
+ # Contact
 
 
 # Reference
