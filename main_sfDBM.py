@@ -29,6 +29,8 @@ import textwrap
 def crust_to_repi(crust_name):
     """
     The function to call the example input data (PD, MC, and SD crusts)
+    In this repository, three examples are provided.
+    To simulate other types of crusts and periods of time, other field data can be used.
     """   
     switcher = {
         'PD': 1,
@@ -39,15 +41,15 @@ def crust_to_repi(crust_name):
 
 def load_field_data_soil_properties(PATH, crust_name, realTinput):
     """
-    The function to load soil properties and field observation data
-    """    
-    
+    The function to load the data of soil properties and field observation data
+    """     
     # load pre-calculated water retention and water film thickness (Kim and Or 2016)
     # https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0147394
     preRetCV = os.path.join(PATH, "input_data", "Retention_hydration_interp_pot_D_2.65.csv")
     df_ret = pd.read_csv(preRetCV)
     df_ret['local_satu'] = df_ret.FilmThickTemp/df_ret.FilmThickTemp.iloc[0]
 
+    # For the case, summer or winter, we choose one month of period from the data 
     if realTinput == 'summer':
         t1 = '2019-07-01'
         t2 = '2019-08-01'
@@ -76,7 +78,6 @@ def load_field_data_soil_properties(PATH, crust_name, realTinput):
     fname = 'time_series_*_'+t1+'_'+t2+'_rep_%d'%int(rep_i)
     fnames = glob.glob(os.path.join(PATH, "input_data", fname+".csv"))
     tempList = pd.read_csv(fnames[0])
-            
     tempList = tempList.set_index(pd.to_datetime(tempList.time))        
     tempList['intp_time'] = (tempList.index - tempList.index[0]).total_seconds()/3600
     tempList = tempList.reset_index(drop=True).set_index('intp_time')
@@ -99,11 +100,12 @@ def load_field_data_soil_properties(PATH, crust_name, realTinput):
 
 def load_list_compounds_gypsum(soilChemConditions, averageT):
     """
-    The function to load parameters of chemical conditions (substrate concentrations, gas solubility, etc.)
+    This function is to load parameters of chemical conditions and parameters (substrate concentrations, gas solubility, etc.)
     We note here that, this function is a sub-module of a general soil model for C and N cycle.
-    Therefore, this function includes inorganic C and N, also the carbonates and gypsum, gaseous compounds relavant for the N cycle
+    Therefore, this includes inorganic C and N compounds, also the carbonates and gypsum, gaseous compounds relavant for the N cycle
     In the paper published at STOTEN (), we have focused on the DIC fractionation with an assumption that other compounds given here are assumed to be absent.
     This function can be modified and used in the other contexts
+    For the study of inorganic C, N related compounds are assumed to be 0 or constant
     """  
     #list of substrates 
     list_substrates = ['O2', # Oxygen 
@@ -133,12 +135,12 @@ def load_list_compounds_gypsum(soilChemConditions, averageT):
     # e valancy
     list_evalancy = [0,0,-1,0,-1,0,-1,0,0,0,1,-2,2,0,0,1,1,0,-2,0]
 
-    # We note here that Zion indicates the amount of cations, 
+    # 'Zion' indicates the amount of cations, 
     # which is similar to Ca2+ but does not react with inorganic carbon. 
     # The moelcular weight is assumed to be the same of Ca and valancy 1
 
     # Diffusion coefficients
-    list_diffusion = np.array([1.73, 1.65, 1.02, 0.5184, 1.47, 1.41, 1.64, 1.64, 1.91, 1.58, 1.41, 0.79, 0.8640, 0, 0, 8.04, 0, 0, 0.92448, 0])*0.0001/(24*3600) #m^2/s
+    list_diffusion = np.array([1.73, 1.65, 1.02, 0.5184, 1.47, 1.41, 1.64, 1.64, 1.91, 1.58, 1.41, 0.79, 0.8640, 0, 0, 8.04, 0, 0, 0.92448, 0])*0.0001/(24*3600) # in the unit of m^2/s
     # NO diffusivity from Zacharia Deen (2004) https://link.springer.com/content/pdf/10.1007/s10439-005-8980-9.pdf    
     # SO4 2- diffusivity from https://www.aqion.de/site/diffusion-coefficients
     # CaSO4 diffusivity assumed zero
@@ -154,16 +156,14 @@ def load_list_compounds_gypsum(soilChemConditions, averageT):
                            'NO', # Nitric oxide
                            'N2O' # Nitrous oxide
                            ]
-    
 
-    NH3ppb = 1
-    HONOppb = 0
-    NOppb = 0
-    N2Oppb = 333
-    CO2ppm = 400
+    NH3ppb = 1 #assumed
+    HONOppb = 0 #assumed
+    NOppb = 0 #assumed
+    N2Oppb = 333 #assumed
+    CO2ppm = 400 #Here the value is assumed 400, but in the calculation, the observed atmospheric CO2 levels are used.
     
     #partial pressure of atmospheric substances
-    pN2 = 0.7809 #when N2 is considered for finxation
     pO2 = 0.2095
     pCO2 = CO2ppm * 10 ** (- 6) #assuemd to be 400 ppm
     pNH3 = NH3ppb * 10 ** (- 9)
@@ -195,10 +195,6 @@ def load_list_compounds_gypsum(soilChemConditions, averageT):
     KHN2O = convH*2.4 * 10 ** (- 4)
     enthalpyN2O = 2700
     
-    #Arrhenius based HONO dissociation
-    KaHONO = 5.6 * 10 ** (-4);
-    enthalpyHONOKa = 1423.5;
-    
     list_gas_KH = [KHO2, KHCO2,KHNH3, KHHONO,KHNO, KHN2O]
     list_gas_enthalpy = [enthalpyO2, enthalpyCO2,enthalpyNH3, enthalpyHONO,enthalpyNO, enthalpyN2O]
     
@@ -208,7 +204,6 @@ def load_list_compounds_gypsum(soilChemConditions, averageT):
     list_compounds = pd.concat([list_compounds, list_gas_compounds], axis=1)
     
     # Initial conditions given based on the soil chemical properies and observation
-    amountCations = soilChemConditions['amountCations']
     Zion = soilChemConditions['Zion']
     initCalcium = soilChemConditions['initCalcium']
     initCalcite = soilChemConditions['initCalcite']
@@ -216,7 +211,6 @@ def load_list_compounds_gypsum(soilChemConditions, averageT):
     initSulfate = soilChemConditions['initSulfate']
 
     #Dissociation constants of DIC at the stardard condition
-    KA = 10 ** (- 9.4003)
     K1C = 10 ** (- 6.3819)
     K2C = 10 ** (- 10.3767)
     
@@ -311,23 +305,23 @@ def solubility(KH, enthalpy, temperatureTemp):
 
 def steady_state(df_soil_r, averageT,porosity=0.5, amountCations=0.003,initSulfate=960,initCalcium= 400):
     """
-    This function finds an initial condition for the field application. 
+    This function finds an initial condition for the field application (simulations start from a chemicall steady state)
     Assuming the given temperature (no dynamics) and provied chemical properties, it calculates the pationing of substrates at the saturated condtions
     Here, the saturation is assuemd to be 0.99 for a numerical reason
     The function returns the initial concentration of the chemical substrates, that are in equlibilrium with gas-liquid partionioning at the given pH
     """      
     #This fCA factor is to accelerate the CO2 dissolution mimicking the role of carbonic anhydrase
     #Setting this value 1, indicates no effects in CO2 dissolution 
+    #fCA was introduced in the code for another purpose and this does not play a role in this work
     fCA=1 
 
-    # initial condition for chemical soil properites    
+    # initial condition for chemical soil properite measured for field soil samples
     initCalcitef = df_soil_r['CaCO3 (g/g)'].values[0]
     initGypsumf = df_soil_r['gypsum (%)'].values[0]*0.01
     target_pH = df_soil_r['pH'].values[0]
     Zion = amountCations
-    # mean soil weight per patch --- will be used to connect calcite and gypsum amount
-    # calculation for 1 g of soil
-    averageMsoil = 1
+    # The script is designed for 1 g (calculating the CO2 efflux per 1 g of soil)
+    averageMsoil = 1 #g
     # unit in g for solid phase of the domain
     initCalcite = averageMsoil*initCalcitef
     # unit in g for solid phase of the domain
@@ -343,43 +337,36 @@ def steady_state(df_soil_r, averageT,porosity=0.5, amountCations=0.003,initSulfa
                               )
     # Load all the compounds
     list_compounds = load_list_compounds_gypsum(soilChemConditions, averageT)
-    
+
     MumaxTt, HenryConstList, pKList, Density_air = EnvironmentProfileNItrification(list_compounds, np.array(averageT), C_only=False)
     pKs = pKList.mean(axis=0).mean(axis=0)
     
+    #nx and ny are the number of spatial elements. When spatial heterogeneity should be considered, these values can be changed
+    #This example script is only to illustrate the processes included in the model of 1g soil, thus only usnig 1 by 1 spatial element
     nx = 1
     ny = 1
-    
-    saturation = 0.99
-    # porosity = df_soil_r.porosity.values[0]
     # Calculation of the unit volume of 1g of soil
     # Bulk density assumed to be 1.8 g/cm3 
     # total volume of the domain V = 1/1.8  = 0.55555 for a cube (1/1.8)**(1/3)=0.822cm length
     # From the porosity, calculate the pore volume and soil volume 
-    # porevolume = \phi V = df_soil_r.porosity.values[0]*(1/1.8)
     poreVolume = porosity*(1/1.8)*10**-6 # in m^3 
-    #Calculate the steady state for half saturation 
+    #Calculate the steady state for almost saturated condition
+    saturation = 0.99 # Here we set almost saturated condition, allowing gas-liquid phase interaction on the surface
     waterVolume = saturation*poreVolume # in m^3 
     gasVolume = poreVolume-waterVolume # in m^3 
     #Based on the total soil specific area, get the effective waterfilm thickness 
     ssArea = df_soil_r['total_soil_SSA (m2/g)'].values[0] # in m^2/g -> The value indicates the ss area of the domain, thus [m2] 
-    patchArea = ssArea
-    waterFilm = waterVolume/ssArea # unit in [m]
-    voidTh = poreVolume/ssArea#Effective void thickness 
-    
-    #Reactive surface for calcite and gypsum
+    patchArea = ssArea    
+    #Reactive surface for calcite and gypsum based on the measurement
     SA_calcite = initCalcite*df_soil_r['SSA (m2 g-1)'].values[0] #m2 
     SA_gypsum = ssArea*initGypsumf #m2
     
-    # total weight of solution in g base calculation for an inital condition
-    totalweight = waterVolume*998000
     # find equilibrium of the chemical conditions and update values.
     ions = np.array(list_compounds.e_val.values)
     chemlist = list_compounds.index.values
     chemlist = np.delete(chemlist,[16])
     ions = np.delete(ions,[16])
     chemlist_woH = np.delete(chemlist,[15])
-    
     # # add gas concentrations
     hlist = []
     gclist = []
@@ -387,18 +374,13 @@ def steady_state(df_soil_r, averageT,porosity=0.5, amountCations=0.003,initSulfa
         hlist.append(HenryConstList[chem])
         gclist.append(
             list_compounds.loc[chem].initCg*10**(-3)/list_compounds.loc[chem].molwt)
-    
     pH_ini = target_pH
-    nx = 1
-    ny = 1
-    
     # assign concentration and find mass equiiliria of gaseous substrates per patch according to Henry's law
     sitesCgas = dict()
     sitesNEquil = dict()
     sitesNGEquil = dict()
     HenryDomain = dict()
     AlphaM = dict()
-    
     for c_name in list(HenryConstList):
         sitesCgas.update({c_name:list_compounds.loc[c_name].initCg*np.ones((nx,ny))})
         sitesNGEquil.update({c_name:list_compounds.loc[c_name].partial_pressure*Density_air})
@@ -406,11 +388,9 @@ def steady_state(df_soil_r, averageT,porosity=0.5, amountCations=0.003,initSulfa
         sitesNEquil.update({c_name:np.multiply(HenryConstList[c_name],sitesCgas[c_name])})
         AlphaM.update({c_name:np.multiply(HenryConstList[c_name],waterVolume) + gasVolume})
     
-    
     sitesC = dict()
     sitesN = dict()
     sitesCtemp = dict()  # temporary arrays for pH calculations
-    
     for chem in list_compounds.index:
         sitesC.update({chem: list_compounds.loc[chem].initC*np.ones((nx, ny))})
         sitesN.update(
@@ -420,22 +400,19 @@ def steady_state(df_soil_r, averageT,porosity=0.5, amountCations=0.003,initSulfa
     sitesC.update({'pH': pH_ini*np.ones((nx, ny))})
         
     #Here, the total weight indicates soil water weight not the soil weight
-    totalweight = waterVolume*998000*np.ones((nx, ny))  # weight of water in g
+    totalweight = waterVolume*998000*np.ones((nx, ny))  # weight of water in g (998000 is the water density at the standard condition)
     
     for chem in list_compounds.index:
         if not chem in ['CaCO3', 'CaSO42H2O']:
             totalweight = totalweight + sitesN[chem]
     
     # needs when temperature changes
-    MumaxTt, HenryConstList, pKList, Density_air = EnvironmentProfileNItrification(
-        list_compounds, np.array(averageT), C_only=False)
+    MumaxTt, HenryConstList, pKList, Density_air = EnvironmentProfileNItrification(list_compounds, np.array(averageT))
     
     # update equilibrium conditions based on changes in temperature
     for chem in list(HenryConstList):
-        sitesNGEquil.update(
-            {chem: list_compounds.loc[chem].partial_pressure*Density_air})
+        sitesNGEquil.update({chem: list_compounds.loc[chem].partial_pressure*Density_air})
         HenryDomain.update({chem: HenryConstList[chem]})
-    
     
     hlist = []
     gclist = []
@@ -443,9 +420,10 @@ def steady_state(df_soil_r, averageT,porosity=0.5, amountCations=0.003,initSulfa
         hlist.append(HenryDomain[chem])
         gclist.append(sitesNGEquil[chem]*0.001/list_compounds.loc[chem].molwt)
     
+    #index required for the spatial array. 
+    #Here, no spatial distribution is not considered, thus index 0 are assigned for xx and yy
     xx = 0
     yy = 0 
-    
     kla = 1.e-9*patchArea/waterVolume
     gasflow = 100000
     
@@ -460,7 +438,6 @@ def steady_state(df_soil_r, averageT,porosity=0.5, amountCations=0.003,initSulfa
     # find equilibrium of the chemical conditions and update values.
     y0 = []
     for chem in list(chemlist):  # compounds not related to gypsum
-        #y0.append(sitesC[chem][xx,yy]*10**(-3)/list_compounds.loc[chem].molwt) # unit in M (mol/L)
         # unit in mol/kg
         if not chem in ['CaCO3', 'CaSO42H2O']:
             y0.append(sitesN[chem][xx, yy]*1000/list_compounds.loc[chem].molwt/totalw)
@@ -476,7 +453,7 @@ def steady_state(df_soil_r, averageT,porosity=0.5, amountCations=0.003,initSulfa
         y0.append(0)
     
     y0 = np.array(y0)
-
+    #Solve initial value problem of ODE to find a chemical steady state under g
     soln = solve_ivp(chem_gypsum_calcite_aw_Z_reaction, (0.0, 1000), y0,
                      args=(Z, ions, pKs, hlist, gclist, rlist, kla, gasflow /
                            gasVolume, theta, totalw, SA_gypsum, SA_calcite, fCA),
@@ -499,27 +476,59 @@ def steady_state(df_soil_r, averageT,porosity=0.5, amountCations=0.003,initSulfa
 
     return sitesC
 
-def EnvironmentProfileNItrification(list_compounds, Tdist,C_only): 
-    
+def EnvironmentProfileNItrification(list_compounds, Tdist,C_only=False): 
+    '''
+    Parameters
+    ----------
+    list_compounds : Pandas DataFrame
+        The dataframe of chemical (C and N) compounds that are modelled in this study.
+        The dataframe inlcudes necessary variaibles, such as moelcular weight, e valncy, etc are listed together
+        The dataframe is an outcome of the function 'load_list_compounds_gypsum'
+    Tdist : numpy array with the size (nx, ny)
+        Temperatur distribution of the domain.
+        When a vertical profile is assumed, the temperature distribution will result in the distribution of gas solubility along depth
+    C_only : Boolean
+        Wehn only C compounds can considered (CO2 and O2), this C_only=True can be passed
+        This option is beneficial to check only the temperature dependency of CO2 and O2 solubility without running the entire kinetics 
+
+    Returns
+    -------
+    MumaxT :  numpy array with the size (nx, ny)
+        Temperature dependent growth rate correction for microbial activitiy
+        This temperature depedent growth rate is used in previous DBM versions (Kim an Or 2017, 2019)
+        https://bg.copernicus.org/articles/14/5403/2017/
+        which is based on the Schoolfield model(Schoolfield et al 1981)
+        https://doi.org/10.1016/0022-5193(81)90246-0
+    HenryConstList :  dictionary 
+        Temperature depedent solubility of different gases (O2, CO2, NH3, HONO, NO, N2O)
+        for each gas, solubility is given with the numpy array with the size (nx, ny)
+    pKList :  numpy array with the size (nx, ny, 9)
+        Temperature dependent pKa values 
+    Density_air :  numpy array with the size (nx, ny)
+        Temperature dependent air density
+        
+    '''
     stdTemp = 298.15
     absoluteT = 273.15
     conversionC = 12.2
     
+    #parameters for Schoolfield model
     Tl = 297.7
     Th = 314.7
     Hh = 687900
     Hl = - 141100
     Ha = - 5430
+    #Atmospheric Pressure [Pa]
     pa = 101325.0
-    
-    #HONO dissociation
-    KaHONO = 5.6 * 10 ** (- 4)
-    enthalpyHONOKa = 1423.5
-    enthalpyHONOoverR = enthalpyHONOKa * 1000 / 8.314
 
     T = Tdist + absoluteT
+    #Temperature-dependent growth rate correction
     MumaxT = (1 / stdTemp) * T * np.exp((Ha / 8.31) * (1 / stdTemp - 1 / T)) / (1 + np.exp((Hl / 8.31) * (1 / Tl - (1 / T))) + np.exp((Hh / 8.31) * (1 / Th - (1 / T))))
-    
+
+    #HONO dissociation constants
+    KaHONO = 5.6 * 10 ** (- 4)
+    enthalpyHONOKa = 1423.5
+    enthalpyHONOoverR = enthalpyHONOKa * 1000 / 8.314    
     #Oxygen KH
     KHO2 = list_compounds.loc['O2'].KH
     enthalpyO2 = list_compounds.loc['O2'].enthalpy
@@ -572,6 +581,8 @@ def EnvironmentProfileNItrification(list_compounds, Tdist,C_only):
 
 
 def chem_gypsum_calcite_aw_Z_reaction(t,y, Z, ions = None, pKs = None, hlist = None, gclist = None, rlist= None, kla=None, gasflow = None, theta = None,totalw=None, SA_gypsum=None, SA_calcite=None,fCA=1, gypsum_mod=True,calcite_mod=True): 
+    '''
+    This script solves the kinetic equations under the assumption of charge neutrality/mass conservation
     
     # y0 = 'O2'
     # y1 = 'CO2'
@@ -607,11 +618,10 @@ def chem_gypsum_calcite_aw_Z_reaction(t,y, Z, ions = None, pKs = None, hlist = N
     # y39 = 'NO' efflux (g) 
     # y30 = 'N2O' efflux (g)
     
+    '''
     aw = 1- 0.017*(np.sum(y[:len(ions)])+Z-y[14]-y[16])
     # Algebraic Equations : ionic interaction/tempearature dependency is not included in this case
     Kaw = 10 ** (- pKs[8])
-    #y = np.real(y)
-    #y[y <= 0] = 1e-16
 
     totIon = ions.dot(y[:len(ions)]) - y[15] + Z
     y11 = 0.5 * (np.sqrt(totIon * totIon + 4 * Kaw) - totIon)
@@ -627,50 +637,27 @@ def chem_gypsum_calcite_aw_Z_reaction(t,y, Z, ions = None, pKs = None, hlist = N
     epsilon = 87.74 - 0.40008 * theta + 0.0009398 * theta ** 2 - 1.41e-06 * theta ** 3
     B = 50.3 / np.sqrt(epsilon * absT)
     G = 1825000.0 * (epsilon * absT) ** (- 1.5)
-    # # NH4+ HCO3- CO3^2- H+ Ca2+ NO2-
-    # a = np.array([2.5,4,4.5,9,6,3])
-    # ionicValency = np.array([1,- 1,- 2,1,2,- 1])
     # NH4+, HCO3- CO3^2- H+ Ca2+ SO42- OH- NO2-
     a = np.array([2.5, 5.4,5.4,9,5,5,3.5, 3]) #From Truesdell and Jones (1974)
     ionicValency = np.array([1, -1,-2,1,2,-2,-1, -1])
     
     #extended Debye-Heckel
-    pGamma = np.multiply(G,ionicValency ** 2.0) * (np.sqrt(I) / (1 + np.multiply(np.multiply(a,B),np.sqrt(I))))
-    #pGamma =zeros(6,1);
-    
+    pGamma = np.multiply(G,ionicValency ** 2.0) * (np.sqrt(I) / (1 + np.multiply(np.multiply(a,B),np.sqrt(I))))    
     Ka = 10 ** (- pKs[0] + pGamma[3] - pGamma[0])
     K1c = 10 ** (- pKs[1] + pGamma[3] + pGamma[1])
     K2c = 10 ** (- pKs[2] + pGamma[3] + pGamma[2] - pGamma[1])
     KcaComp = 10 ** (- pKs[3] + pGamma[2] + pGamma[4])
     KcaPrecip = 10 ** (- pKs[4] + pGamma[2] + pGamma[4])
     Kahono = 10 ** (- pKs[5] + pGamma[7] + pGamma[3])
-    
     KgypsumDiss = 10 ** (- pKs[6] + pGamma[4] + pGamma[5])
     KgypsumComp = 10 ** (- pKs[7] + pGamma[4] + pGamma[5])
-
-
-    
-    # #k0 = 10 ** 10 / (24 * 60 * 60)
-    # k0 = np.exp(1246.98 - (6.19*10**4)/absT-183.0*np.log(absT))
-    # # reaction for H2CO3* - CO2 hydration CO2eq = KH*CO2(g) :: dissolbed CO2 + H2CO3    
-    # reac0 = k0*(y[1]-aw*y[21]*hlist[1]) 
-
-    # CO2 + H2O -> H+ + HCO3-     
-    # k1 = np.exp(1246.98 - (6.19*10**4)/absT-183.0*np.log(absT))
-    # S = 1000*I/(19.920-1.0049*I) # salinity estimation (Millero, F. J. The marine inorganic carbon cycle. Chemical reviews 2007, 107 (2), 308-341)
-    # A4 = 499002.24*np.exp(4.2986*10**-4*S**2 + S*5.75499*10**-5)
-    # k2 = A4*np.exp(-90166.83/(8.31*absT))/Kaw
-    #k1 = 2221 / (24 * 60 * 60)    
-    #k2 = 7.19*10**8/(24*60*60) #/s
-    #reac1 = (k1 + k2*frac) * (y[1] - y[2] * y[15] /(aw*K1c))
-    
+  
     reac1 = (0.02570*fCA + 8321.76*frac) * (y[1] - y[2] * y[15] /(aw*K1c))
     reac2 = 0
     
     # HCO3 - -> H+ + CO3 2-
     #k3 = 10 ** 10 / (24 * 60 * 60)
     #reac3 = k3 * (y[2] - y[15] * y[11] / K2c)
-    
     reac3 = 115740.74 * (y[2] - y[15] * y[11] / K2c)
 
     # NH4+ --> H+ + NH3
@@ -711,23 +698,19 @@ def chem_gypsum_calcite_aw_Z_reaction(t,y, Z, ions = None, pKs = None, hlist = N
     
         
     # Autoxidation of NO to NO2- 
-    
     #kno = 9e6
     #reac8 = kno*y[8]*y[8]*y[0]
     reac8 = 9e6*y[8]*y[8]*y[0]
-
-    #reac8 = 0 
     # 3HNO2 -> 2NO + NO3- + H+ * H2O
     #khno2 = 1.34e-6
     #reac9 = khno2*(y[7]**4)/y[8]
-    reac9 = 0
+    reac9 = 0 #very slow and assumed to be zero
     
     # push pH to balance change neutrality 
     #k10 = 10 ** 10 / (24 * 60 * 60)
     #reac10 = k10 * (y[15] - y11)
     reac10 = 115740.74 * (y[15] - y11)
 
-    
     # complexation of CaSO4*
     #kpre = 10 ** 10 / (24 * 60 * 60)
     #reac11 = kpre * (y[19] - y[12]*y[18]/KgypsumComp)
@@ -747,7 +730,6 @@ def chem_gypsum_calcite_aw_Z_reaction(t,y, Z, ions = None, pKs = None, hlist = N
         '''    
         # SA_gypsum #model specific areea for gypsum resolution (0.12m^2/g)
         # Temperature dependence with the activation energe 34 kJ/mol
-        
         SIgypsum = aw*aw*y[12]*y[17]/KgypsumDiss
         if SIgypsum > 1:
             kpre = SA_gypsum*2.5*10**-6 # Reiss et al (2021) Minerals 2021, 11(2), 141; https://doi.org/10.3390/min11020141 
@@ -765,24 +747,19 @@ def chem_gypsum_calcite_aw_Z_reaction(t,y, Z, ions = None, pKs = None, hlist = N
         #reac12 = kpre * (y[17]/totalw - y[12] * y[18]/KgypsumDiss)
         reac12 = 115740.74 * (y[16]/totalw - y[12] * y[17]/KgypsumDiss)
     
-    
     #gas transfer 
     kLO2 = kla*hlist[0]
     o2trans = kLO2*(hlist[0]*y[19]-y[0]) 
- 
     kLCO2 = kla*hlist[1]
     co2trans = kLCO2*(hlist[1]*y[20]-y[1]) 
-    
     #volatile gases 
     kLNH3 = kla/hlist[2]
     nh3trans = kLNH3*(hlist[2]*y[21]-y[5]) 
     #volatile gases 
     kLHONO = kla/hlist[3]
     honotrans = kLHONO*(hlist[3]*y[22]-y[7]) 
-    
     kLNO = kla*hlist[4]
     notrans = kLNO*(hlist[4]*y[23]-y[8]) 
-
     kLN2O = kla*hlist[5]
     n2otrans = kLN2O*(hlist[5]*y[24]-y[9]) 
     
@@ -794,7 +771,6 @@ def chem_gypsum_calcite_aw_Z_reaction(t,y, Z, ions = None, pKs = None, hlist = N
     honoinput = gasflow*(y[22]-gclist[3]) 
     noinput = gasflow*(y[23]-gclist[4]) 
     n2oinput = gasflow*(y[24]-gclist[5]) 
-    
     
     dy0 = -reac8 +o2trans + rlist[0]# O2
     dy1 = - reac1 - reac2 + co2trans + rlist[1] # CO2
@@ -835,7 +811,6 @@ def chem_gypsum_calcite_aw_Z_reaction(t,y, Z, ions = None, pKs = None, hlist = N
     return [dy0, dy1, dy2, dy3, dy4, dy5, dy6, dy7, dy8, dy9, dy10,dy11, dy12, dy13, dy14, dy15, dy16, dy17, dy18, dy19, dy20, dy21, dy22,dy23,dy24,dy25, dy26, dy27, dy28, dy29, dy30]
  
 
-
 def plot_results(PATH,fname_target,tempList,effluxList,timeConcDist,timeLine,saveFigures=False,initD=18,pltD=7): 
     '''
     This fuction outputs the figure similar to the Figure 7 in the paper Kim et al 2024,
@@ -865,8 +840,6 @@ def plot_results(PATH,fname_target,tempList,effluxList,timeConcDist,timeLine,sav
     axs[2].fill_between(tempList.index, 0, 1, where=tempList.par < 5, color='gray', ec = 'gray',alpha=0.2,linewidth=0.0, transform=axs[2].get_xaxis_transform())
         
     chem = 'CO2'    
-    #convF = 1/(180*180*180) #change to m2 units:: should be changed when consider profile
-    #convF = 1/(1.8*1000000)#change to m2 units:: should be changed when consider profile
     convF = 0.0082*0.0082*12#change to m2 units:: should be changed when consider profile
     efs = effluxList[chem]*1000000/44.01/((timeLine[1]-timeLine[0])*3600)/convF
     axs[0].plot(tempList.index,efs,c='k',lw =2, ls='-', label='Model prediction')
@@ -933,32 +906,31 @@ def main_tabernas_biocrusts(PATH, crust_name, realTinput, respif, fname_target, 
         mature cyanobacterial crusts (MC)
         lichen crusts dominated by XXXX (SD)
         Choose one case among ['PD', 'MC', 'SD']
-    realTinput : TYPE
-        DESCRIPTION.
-    respif : TYPE
-        DESCRIPTION.
+    realTinput : str
+        Season to simulate, winter or summer
+        In this script, these seasons indicate the field dataset that is already saved
+        for winter (2019-01-01 - 2019-02-01) and summer (2019-07-01 - 2019-08-01)
+    respif : float
+        respiration rate by biological agent in the model (can be positive or negative)
     fname_target : str
         name of the files to save outcome
     filesave : boolean, optional
         True when the outcome should be saved. The default is True.
     plotFigures : TYPE, optional
-        DESCRIPTION. The default is True.
+        whether to plot figure after completing the simulation. The default is True.
     figuresave : TYPE, optional
-        DESCRIPTION. The default is False.
+        whether to save the figure. The default is False.
 
     Returns
     -------
     Aside from the saved npz file, three return values are assigned for plotting
     timeLine : list
-        DESCRIPTION.
+        list of elpased time needed for plotting
     effluxList : dict
-        DESCRIPTION.
-    timeConcDist : dict
-        DESCRIPTION.
-
+        effluxes of different gases (O2, CO2, NH3, HONO, NO, N2O)
+    timeConcDist : dict 
+        aqueous concentrations of substrates calcuated during the simulations
     '''
-    
-
     # Call function to load soil properties and field observations
     df_soil_r, df_obs, averageT = load_field_data_soil_properties(PATH, crust_name, realTinput)
     
@@ -1002,10 +974,12 @@ def main_tabernas_biocrusts(PATH, crust_name, realTinput, respif, fname_target, 
     
     
     list_compounds = load_list_compounds_gypsum(soilChemConditions, averageT)
-    MumaxTt,HenryConstList,pKList,Density_air = EnvironmentProfileNItrification(list_compounds, np.array(averageT),C_only=False)
+    MumaxTt,HenryConstList,pKList,Density_air = EnvironmentProfileNItrification(list_compounds, np.array(averageT))
     pKs = pKList.mean(axis=0).mean(axis=0)
 
     # This project takes the simple upscaling strategies instead of modelling vertical profiles for computational reasons
+    #nx and ny are the number of spatial elements. When spatial heterogeneity should be considered, these values can be changed
+    #This example script is only to illustrate the processes included in the model of 1g soil, thus only usnig 1 by 1 spatial element
     nx = 1 # spatial element in horizontal direction
     ny = 1 # spatial element in vertical direction (along the soil depth)
     
@@ -1101,7 +1075,7 @@ def main_tabernas_biocrusts(PATH, crust_name, realTinput, respif, fname_target, 
                 
             temperaturelist[examineT] = thetaTC
             # needs when temperature changes
-            MumaxTt,HenryConstList,pKList,soil_air_density = EnvironmentProfileNItrification(list_compounds, np.array(thetaTC),C_only=False)
+            MumaxTt,HenryConstList,pKList,soil_air_density = EnvironmentProfileNItrification(list_compounds, np.array(thetaTC))
             Density_air = air_density(df_obs['ta'].iloc[examineT],0,101325.0) * 1000
             xc_atm = df_obs['xc_atm_pd'].iloc[examineT]/1000
             #update equilibrium conditions based on changes in temperature 
@@ -1230,7 +1204,7 @@ def main():
 
     parser.add_argument('crust_name', type=str, help='PD, MC, SD')
     parser.add_argument('season', type=str, help='winter, summer')
-    parser.add_argument('respif', type=float, help='where to cut the training data; qualitiy assurance level of 50 or75')
+    parser.add_argument('respif', type=float, help='respiration rate [$\mu$mol m$^{-2}$s$^{-1}$]')
     args = parser.parse_args()
 
     crust_name = args.crust_name
