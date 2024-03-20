@@ -4,7 +4,7 @@
    
  - This repository contains the simplified field application of DBM (dfDBM), which provides a minimized script for simulating gaseous C and N emissions from soils and biocrusts under dynamic hydration conditions. Here, we demonstrate an example of using the model to explain the nocturnal CO<sub>2</sub> uptake by dryland soils with limited biological activities (Kim et al, 2024).
  
- - Compared to the previous DBM models in MATLAB (please refer to other repositories, DBM-Biogeoscience and DBM-for-drying-soils), this sfDBM is written in Python 3. Another distinction is that, in this sfDBM, the individual-based model of microbial communities is simply replaced as a sink and source of substrates (namely, population-based). However, the kinetics to determine gas-liquid partitioning of compounds, local pH determination under the assumption of charge neutrality, are updated by including gypsum.
+ - Compared to the previous DBM models in MATLAB (please refer to other repositories, [DBM-Biogeoscience](https://github.com/minsughim/DBM--Biogeoscience) and [DBM-for-drying-soils](https://github.com/minsughim/DBM-for-drying-soils)), this sfDBM is written in Python 3. Another distinction is that, in this sfDBM, the individual-based model of microbial communities is simply replaced as a sink and source of substrates (namely, population-based). However, the kinetics to determine gas-liquid partitioning of compounds, local pH determination under the assumption of charge neutrality, are updated by including gypsum.
  
  - The script provided utilizes environmental variables such as air, surface, and soil temperature, water content, atmospheric CO<sub>2</sub>, as well as measured soil properties such as porosity, soil pH, CaCO<sub>3</sub> contents, etc. The field data and detailed measurement campaigns can be found in Lopez-Canfin et al., 2022.
 
@@ -12,6 +12,10 @@
  
  # Model simulation
 The script ./main_sfDBM.py includes all the functions. The main function takes three arguments: the name of the crust (here, field data samples for PD and SD are provided), the season (either winter or summer), and the respiration rate (either positive or negative, in the unit of μmol $m^{-2} s^{-1}$).
+To run the model, for example for the case of physical depositional crust (PD) under dry/cool conditions without additional respiration (rate = 0.0), simply execute the main code as follows
+
+    $ python main_sfDBM.py PD winter 0.0
+
 
 # Reference
 **Minsu Kim**, Clément Lopez-Canfin, Roberto Lázaro, Enrique P. Sánchez-Cañete, and Bettina Weber (2024) Unravelling the main mechanism responsible for the nocturnal CO2 uptake by dryland soils. __Science of the Total Environment__ http://doi.org/[10.1016/j.scitotenv.2024.171751
