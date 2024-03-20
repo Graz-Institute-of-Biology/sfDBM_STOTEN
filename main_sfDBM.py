@@ -1103,8 +1103,8 @@ def main_tabernas_biocrusts(PATH, crust_name, realTinput, respif, fname_target, 
                     
                     # Conversion of CO2 reaction rate from mumol/m2.sec to mol/g_solution.sec
                     # (0.00822)*2 is the area conversion factor from 1g cube (1/1.8)**(1/3)=0.822cm length
-                    
-                    reactionCO2 = respif*1.e-6*(0.00822)**2/totalw
+                    # for vertical profile the factor should be revised and integrated along the depth
+                    reactionCO2 = respif*1.e-6*12*(0.00822)**2
 
                     rlist = []
                     for chem in list(chemlist):
