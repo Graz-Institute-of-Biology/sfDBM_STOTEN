@@ -10,6 +10,9 @@
 
 -  In this repository, we provide a small subset of the data to demonstrate the usage of the model (located in the folder ./input_data/time_series*.csv). The complete dataset can be found in the data repository by [Lopez-Canfin et al., 2024](https://doi.org/10.5281/zenodo.10836173) 
  
+ - Correspondence to: Minsu Kim (minsu.kim@uni-graz.at)
+
+ 
  ## System requirements
 
 ### Dependencies (tested version)
@@ -19,7 +22,7 @@
 		- pandas (1.5.3)
 		- matplotlib (3.8.3)
 
-## Installation
+### Installation and simulation 
 The script ./main_sfDBM.py includes all the functions. The main function takes three arguments: the name of the crust (here, field data samples for PD and SD are provided), the season (either winter or summer), and the respiration rate (either positive or negative, in the unit of μmol $m^{-2} s^{-1}$).
 To run the model, for example for the case of physical depositional crust (PD) under dry/cool conditions without additional respiration (rate = 0.0), simply execute the main code as follows from the command line after navigating to the same directory:
 ```
