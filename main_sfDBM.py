@@ -3,10 +3,10 @@
 The simplified Field-scale desert biocrust model (sfDBM)
 
 Reference:
-Unravelling the main mechanism responsible for nocturnal CO2 uptake by dryland soils 
-Kim et al.(2024) 
-Science of the Total Environment
-DOI:    
+    Kim et al.(2024) 
+    Unravelling the main mechanism responsible for nocturnal CO2 uptake by dryland soils 
+    Science of the Total Environment
+    DOI: https://doi.org/10.1016/j.scitotenv.2024.171751
 
 This Script simulates the CO2 efflux from biocrust soils using previously observed envrionmental input (soil properties, temperatures, atmospheric CO2 etc.)
 Additional CO2 reaction terms can be added with the unit of XXXX 
@@ -28,13 +28,12 @@ import textwrap
 
 def crust_to_repi(crust_name):
     """
-    The function to call the example input data (PD, MC, and SD crusts)
+    The function to call the example input data (PD, and SD crusts)
     In this repository, three examples are provided.
     To simulate other types of crusts and periods of time, other field data can be used.
     """   
     switcher = {
         'PD': 1,
-        'MC': 7,
         'SD': 12,
     }
     return switcher.get(crust_name, "no data provided ")
@@ -702,8 +701,6 @@ def chem_gypsum_calcite_aw_Z_reaction(t,y, Z, ions = None, pKs = None, hlist = N
     #reac8 = kno*y[8]*y[8]*y[0]
     reac8 = 9e6*y[8]*y[8]*y[0]
     # 3HNO2 -> 2NO + NO3- + H+ * H2O
-    #khno2 = 1.34e-6
-    #reac9 = khno2*(y[7]**4)/y[8]
     reac9 = 0 #very slow and assumed to be zero
     
     # push pH to balance change neutrality 
@@ -819,7 +816,7 @@ def plot_results(PATH,fname_target,tempList,effluxList,timeConcDist,timeLine,sav
     for instance, setting initD = 18 and pltD =7, will show plots from 18th Jan to 25(18+7)th Jan. 
     CO2 efflux (Fc)- field observations and model predictions, local pH values, and input temperautre    
     '''    
-    fig, axs = plt.subplots(3,1, sharex=True,figsize=(5,5),gridspec_kw={'height_ratios': [2,1,1]},dpi=300)
+    fig, axs = plt.subplots(3,1, sharex=True,figsize=(5,5),gridspec_kw={'height_ratios': [2,1,1]})
     plt.rcParams['font.size'] = '12'
         
     # get labels for plotting (changing from elapsed hours to the time of the observation)
@@ -840,7 +837,7 @@ def plot_results(PATH,fname_target,tempList,effluxList,timeConcDist,timeLine,sav
     axs[2].fill_between(tempList.index, 0, 1, where=tempList.par < 5, color='gray', ec = 'gray',alpha=0.2,linewidth=0.0, transform=axs[2].get_xaxis_transform())
         
     chem = 'CO2'    
-    convF = 0.0082*0.0082*12#change to m2 units:: should be changed when consider profile
+    convF = 0.0082*0.0082*12#change to m2 units:: should be changed when considering profiles
     efs = effluxList[chem]*1000000/44.01/((timeLine[1]-timeLine[0])*3600)/convF
     axs[0].plot(tempList.index,efs,c='k',lw =2, ls='-', label='Model prediction')
     axs[0].plot(tempList.index, tempList.fc, marker='o',markersize=5,c='r',mec='k',mew= 0.5, alpha=0.6,ls='',label='observation')
@@ -903,9 +900,8 @@ def main_tabernas_biocrusts(PATH, crust_name, realTinput, respif, fname_target, 
     crust_name : str
         Name of biocrust types. Here we provide examples of 
         physical depositional crusts (PD),
-        mature cyanobacterial crusts (MC)
-        lichen crusts dominated by XXXX (SD)
-        Choose one case among ['PD', 'MC', 'SD']
+        lichen crusts dominated by Squamarina lentigera and Diploschistes diacapsis (SD)
+        Choose one case among ['PD', 'SD']
     realTinput : str
         Season to simulate, winter or summer
         In this script, these seasons indicate the field dataset that is already saved
@@ -1054,7 +1050,7 @@ def main_tabernas_biocrusts(PATH, crust_name, realTinput, respif, fname_target, 
 
             t = examineT*plottt + tt
             exposedHours = t * dt /3600
-            if exposedHours%6 == 0:
+            if exposedHours%24 == 0: #every day print the elapsed hours
                 print(exposedHours)   
             
             waterFilm = df_obs['wft'].iloc[examineT]
@@ -1136,6 +1132,8 @@ def main_tabernas_biocrusts(PATH, crust_name, realTinput, respif, fname_target, 
 
                     y0 = np.array(y0)
                     y0[y0 < 0] = 0
+                    # Here we note that the model becomes unstable when pH > 10 owing to the tolerence in solving the differential equation.
+                    # To resolve for highly alkaline cases, tolerence should be readjuasted (which will lead to a longer computation time)
                     soln = solve_ivp(chem_gypsum_calcite_aw_Z_reaction, (0.0, DeltaT), y0,
                                      args=(Z, ions, pKs, hlist, gclist, rlist, kla, gasflow /
                                            gasVolume, theta, totalw, SA_gypsum, SA_calcite, fCA),
@@ -1195,14 +1193,46 @@ def main_tabernas_biocrusts(PATH, crust_name, realTinput, respif, fname_target, 
 def main():
     
     description = textwrap.dedent("""\   
-        This script is to
-        ORCID:https://orcid.org/0000-0002-3942-3743
+                                  
+        This script is simulated gaseous emission (CO2) from soils under field conditions, a simplified version of the Desert Biocrust Model (DBM)
+        Here we use previously observed envrionmental input (soil properties, temperatures, atmospheric CO2 etc.)
+        This is a minimal code to document the processes included in the model efficiently.
+        The model simulates the CO2 emission from 1g of soil under the diurnal cycle of temperature (and this code utilise the soil temperature at 5cm depth)
+        For the full code, it needs temperature/hydration along the vertical soil profile. For the details, see 
+
+        Input
+        -------
+
+        crust_name : str
+            Name of biocrust types. Here we provide examples of 
+            physical depositional crusts (PD),
+            lichen crusts dominated by Squamarina lentigera and Diploschistes diacapsis (SD)
+            Choose one case among ['PD', 'SD']
+        season : str
+            Season to simulate, winter or summer
+            In this script, these seasons indicate the field dataset that is already saved
+            for winter (2019-01-01 - 2019-02-01) and summer (2019-07-01 - 2019-08-01)
+        respif : float
+            respiration rate by biological agent in the model (can be positive or negative) in the unit of [$\mu$mol m$^{-2}$s$^{-1}$]
+    
+        Returns
+        -------
+        Aside from the saved npz file, three return values are assigned for plotting
+        timeLine : list
+            list of elpased time needed for plotting
+        effluxList : dict
+            effluxes of different gases (O2, CO2, NH3, HONO, NO, N2O)
+        timeConcDist : dict 
+            aqueous concentrations of substrates calcuated during the simulations
+            
+            
+        Contact: Minsu Kim (minsu.kim@uni-graz.at) https://orcid.org/0000-0002-3942-3743
     """)
         
     parser = argparse.ArgumentParser(description=description, epilog='',
             formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.add_argument('crust_name', type=str, help='PD, MC, SD')
+    parser.add_argument('crust_name', type=str, help='PD, SD')
     parser.add_argument('season', type=str, help='winter, summer')
     parser.add_argument('respif', type=float, help='respiration rate [$\mu$mol m$^{-2}$s$^{-1}$]')
     args = parser.parse_args()
@@ -1212,51 +1242,27 @@ def main():
     respif = args.respif
     filesave = True
     saveFigures = True
-    plotFigures = True
+    plotFigures = False
     
     fname_target = 'sfDBM_'+crust_name+'_'+realTinput+'_with_reac_respif_%.4f'%respif 
     print(fname_target)
     
-    PATH = "C:/Users/kimmi/Documents/GitHub/dfDBM_STOTEN"
+    PATH = "."
 
     # Load pre-saved soil property data
     df_soil_r, df_obs, averageT = load_field_data_soil_properties(PATH, crust_name, realTinput)
     
-    # run a main code of soi-gas exchange model (the simplified field DBM)
+    # run the main code of soi-gas exchange model (the simplified field DBM)
     timeLine,effluxList, timeConcDist = main_tabernas_biocrusts(PATH, crust_name, realTinput,respif, fname_target, filesave=filesave, plotFigures=plotFigures)
     
     if plotFigures:    
         if respif == 0:
             figure_title = crust_name+' ('+realTinput+')'
         else:
-            figure_title = crust_name+' ('+realTinput+') when $R_{CO_2}$ = %.2f [$\mu$mol m$^{-2}$s$^{-1}$]'%respif 
+            figure_title = crust_name+' ('+realTinput+')'+'_with_respif_%.4f'%respif 
+            print(figure_title)
         
         plot_results(PATH, figure_title,df_obs,effluxList,timeConcDist,timeLine,saveFigures=saveFigures) 
 
 if __name__ == '__main__':
     main()
-# %%
-# PATH = "C:/Users/kimmi/Documents/GitHub/dfDBM_STOTEN"
-
-# filesave = True
-# saveFigures = True
-# plotFigures = True
-
-# crust_name = 'PD' # ['PD', 'MC', 'SD']
-# realTinput = 'winter' #['winter', 'summer']
-# respif = 0 #provide in the unit of micromol/m2.sec-1
-
-# fname_target = 'sfDBM_'+crust_name+'_'+realTinput+'_with_reac_respif_%.4f'%respif 
-# print(fname_target)
-
-# df_soil_r, df_obs, averageT = load_field_data_soil_properties(PATH, crust_name, realTinput)
-
-# timeLine,effluxList, timeConcDist = main_tabernas_biocrusts(PATH, crust_name, realTinput,respif, fname_target, filesave=filesave, plotFigures=plotFigures)
-
-# if plotFigures:    
-#     if respif == 0:
-#         figure_title = crust_name+' ('+realTinput+')'
-#     else:
-#         figure_title = crust_name+' ('+realTinput+') when $R_{CO_2}$ = %.2f [$\mu$mol m$^{-2}$s$^{-1}$]'%respif 
-    
-#     plot_results(PATH, figure_title,df_obs,effluxList,timeConcDist,timeLine,saveFigures=saveFigures) 
